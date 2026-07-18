@@ -10,6 +10,8 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
 	struct sockaddr_in addr, cli_addr;
+	char buf[4096];
+	int n;
 	int fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd < 0) {
 		perror("Can't open port");
@@ -25,16 +27,26 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	listen(fd, 5);
-
+	while(1) {
 	socklen_t cli_len = sizeof(cli_addr);
-	int newsockfd = accept(fd, (struct sockaddr *) &cli_addr, &cli_len);
 
-	string response = "HTTP/1.1 200 OK\n\nHello, World!";
-	int n = write(newsockfd, response.c_str(), strlen(response.c_str()));
+	int newsockfd = accept(fd, (struct sockaddr *) &cli_addr, &cli_len);
+		
+	n = read(newsockfd, buf, 4095);
+	if (n < 0) {
+		perror("Error reading request");
+		exit(1);
+	}
+	printf("%s\n", buf);
+		
+	char response[] = "HTTP/1.1 200 OK\n\nHello, World!";
+
+	n = write(newsockfd, response, strlen(response));
 	if (n < 0) {
 		perror("Error responding");
 		exit(1);
 	}
-	cout << "Hello World!\n";
+	close(newsockfd);
+	}
 	return 0;
 }
