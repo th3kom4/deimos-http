@@ -1,10 +1,20 @@
-all: main
+CXX = g++
 
-main: main.cpp
-	g++ -o main main.cpp
+CXXFLAGS = -Wall -Wextra -Wextra -std=c++23 -Iinclude
 
-run: main
-	./main
+TARGET = server
+OBJS = build/main.o build/TcpSocket.o build/ClientConnection.o
+
+all: build_dir $(TARGET)
+
+build_dir:
+	mkdir -p build
+
+$(TARGET): $(OBJS) 
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
+
+build/%.o: src/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm main
+	rm -rf build server
