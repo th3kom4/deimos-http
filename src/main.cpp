@@ -3,6 +3,7 @@
 #include "ClientConnection.hpp"
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
+#include "FileSystemHandler.hpp"
 
 using namespace std;
 
@@ -33,14 +34,20 @@ int main(int argc, char *argv[]) {
                 std::cout << "Agent:  " << request.get_header("User-Agent") << "\n";
                 std::cout << "=================================\n";
 
-                std::string html = "<h1>Parser Success!</h1><p>You requested: " + request.get_uri() + "</p>";
+                auto file_data = FileSystemHandler::read_file("public/index.html");
 			
 				HttpResponse response;
+				response.add_header("Connection", "close");
 
-				response.set_status(200, "OK")
-						.add_header("Content-Type", "text/html")
-						.add_header("Connection", "close")
-						.set_body(html);
+				if (file_data.has_value()) {
+					response.set_status(200, "OK")
+							.add_header("Content-Type", "text/html")
+							.set_body(std::move(file_data.value()));
+				} else {
+					response.set_status(404, "Not Found")
+							.add_header("Content-Type", "text/html")
+							.set_body("<h1>404 - File Not Found</h1>");
+				}
 
 				client.send_response(response.serialize());
 			} catch (const std::invalid_argument& e) {
