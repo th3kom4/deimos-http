@@ -1,0 +1,12 @@
+{
+    "server": "C++ Custom HTTP Engine",
+    "status": "online",
+    "components": [
+        "TcpSocket",
+        "HttpRequest",
+        "HttpResponse",
+        "FileSystemHandler",
+        "StaticRouter"
+    ],
+    "memory_strategy": "Zero-copy move semantics"
+}
