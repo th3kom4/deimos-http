@@ -1,10 +1,15 @@
 #include <iostream>
+#include <memory>
+
 #include "TcpSocket.hpp"
 #include "ClientConnection.hpp"
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
-#include "FileSystemHandler.hpp"
 #include "StaticRouter.hpp"
+
+#include "SecurityMiddleware.hpp"
+#include "StaticFileMiddleware.hpp"
+#include "FallbackMiddleware.hpp"
 
 using namespace std;
 
@@ -20,6 +25,13 @@ int main(int argc, char *argv[]) {
 		std::cout << "Server listening on port " << portno << "...\n";
 		
 		StaticRouter router("public");
+
+		auto fallback_node = std::make_unique<FallbackMiddleware>();
+		auto static_node = std::make_unique<StaticFileMiddleware>(&router);
+		auto pipeline_head = std::make_unique<SecurityMiddleware>();
+
+		static_node->set_next(std::move(fallback_node));
+		pipeline_head->set_next(std::move(static_node));
 
 		while (true) {
 			ClientConnection client = server.accept_connection();
@@ -37,29 +49,9 @@ int main(int argc, char *argv[]) {
                 std::cout << "Agent:  " << request.get_header("User-Agent") << "\n";
                 std::cout << "=================================\n";
 
-				std::string uri = request.get_uri();
-
-				std::string filepath = router.resolve_path(uri);
-				if (filepath.empty()) {
-					continue;
-				}
-
-                auto file_data = FileSystemHandler::read_file(filepath);
-
-				std::string mime_type = router.get_mime_type(filepath);
-			
-				HttpResponse response;
+				HttpResponse response = pipeline_head->invoke(request);
+				
 				response.add_header("Connection", "close");
-
-				if (file_data.has_value()) {
-					response.set_status(200, "OK")
-							.add_header("Content-Type", mime_type)
-							.set_body(std::move(file_data.value()));
-				} else {
-					response.set_status(404, "Not Found")
-							.add_header("Content-Type", mime_type)
-							.set_body("<h1>404 - File Not Found</h1>");
-				}
 
 				client.send_response(response.serialize());
 			} catch (const std::invalid_argument& e) {
