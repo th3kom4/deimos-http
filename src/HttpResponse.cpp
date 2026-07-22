@@ -3,6 +3,14 @@
 #include <string>
 #include <stdexcept>
 
+int HttpResponse::get_status_code() const {
+	return status_code;
+}
+
+const std::vector<char>& HttpResponse::get_body() const {
+	return body;
+}
+
 HttpResponse::HttpResponse() {
 	version = "HTTP/1.1";
 	status_code = 200;

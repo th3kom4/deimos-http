@@ -16,6 +16,9 @@ public:
 
 	std::string serialize() const;
 
+	int get_status_code() const;
+	const std::vector<char>& get_body() const;
+
 private:
 	std::string version;
 	int status_code;

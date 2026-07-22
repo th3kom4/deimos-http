@@ -7,6 +7,7 @@
 #include "HttpResponse.hpp"
 #include "StaticRouter.hpp"
 
+#include "LoggingMiddleware.hpp"
 #include "SecurityMiddleware.hpp"
 #include "StaticFileMiddleware.hpp"
 #include "FallbackMiddleware.hpp"
@@ -28,10 +29,12 @@ int main(int argc, char *argv[]) {
 
 		auto fallback_node = std::make_unique<FallbackMiddleware>();
 		auto static_node = std::make_unique<StaticFileMiddleware>(&router);
-		auto pipeline_head = std::make_unique<SecurityMiddleware>();
+		auto security_node = std::make_unique<SecurityMiddleware>();
+		auto pipeline_head = std::make_unique<LoggingMiddleware>();
 
 		static_node->set_next(std::move(fallback_node));
-		pipeline_head->set_next(std::move(static_node));
+		security_node->set_next(std::move(static_node));
+		pipeline_head->set_next(std::move(security_node));
 
 		while (true) {
 			ClientConnection client = server.accept_connection();
@@ -41,13 +44,6 @@ int main(int argc, char *argv[]) {
 
 			try {
 				HttpRequest request(data);
-
-				std::cout << "\n========== NEW REQUEST ==========\n";
-                std::cout << "Method: " << request.get_method() << "\n";
-                std::cout << "URI:    " << request.get_uri() << "\n";
-                std::cout << "Host:   " << request.get_header("Host") << "\n";
-                std::cout << "Agent:  " << request.get_header("User-Agent") << "\n";
-                std::cout << "=================================\n";
 
 				HttpResponse response = pipeline_head->invoke(request);
 				
