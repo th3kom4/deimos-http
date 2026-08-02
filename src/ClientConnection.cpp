@@ -3,7 +3,8 @@
 #include <sys/socket.h>
 #include <stdexcept>
 
-ClientConnection::ClientConnection(int fd) : client_fd(fd) {}
+ClientConnection::ClientConnection(int fd)
+	: client_fd(fd), state(ConnectionState::Reading) {}
 
 ClientConnection::~ClientConnection() {
 	if (client_fd >= 0) {
@@ -11,32 +12,49 @@ ClientConnection::~ClientConnection() {
 	}
 }
 
-std::string ClientConnection::read_request() {
+void ClientConnection::read_request() {
 	char buffer[4096] = {0};
 
-	ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+	while (true) {
+		ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
-	if (bytes_read < 0) {
-		throw std::runtime_error("Failed to read from socket.");
-	} else if (bytes_read == 0) {
-		return "";
+		if (bytes_read > 0) {
+			read_buffer.append(buffer, bytes_read);
+		} else if (bytes_read == -1) {
+			if (errno == EAGAIN || errno == EWOULDBLOCK) {
+				break;
+			} else {
+				state = ConnectionState::Finished;
+				return;
+			}
+		} else if (bytes_read == 0) {
+			state = ConnectionState::Finished;
+			return;
+		}
 	}
 
-	return std::string(buffer, bytes_read);
+	if (read_buffer.find("\r\n\r\n") != std::string::npos) {
+		state = ConnectionState::Processing;
+	}
 }
 
-void ClientConnection::send_response(const std::string& response) {
-	size_t total_sent = 0;
-	size_t length = response.length();
-	const char* data = response.c_str();
+void ClientConnection::send_response() {
+	while (!write_buffer.empty()) {
+		ssize_t bytes_sent = send(client_fd, write_buffer.c_str(), write_buffer.length(), 0);
 
-	while (total_sent < length) {
-		ssize_t bytes_sent = send(client_fd, data + total_sent, length - total_sent, 0);
-
-		if (bytes_sent < 0) {
-			throw std::runtime_error("Failed to send response to socket.");
+		if (bytes_sent >  0) {
+			write_buffer.erase(0, bytes_sent);
+		} else if (bytes_sent == -1) {
+			if (errno == EAGAIN || errno == EWOULDBLOCK) {
+				break;
+			} else {
+				state = ConnectionState::Finished;
+				return;
+			}
 		}
+	}
 
-		total_sent += bytes_sent;
+	if (write_buffer.empty()) {
+		state = ConnectionState::Finished;
 	}
 }

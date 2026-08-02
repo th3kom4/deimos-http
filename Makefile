@@ -3,7 +3,7 @@ CXX = g++
 CXXFLAGS = -Wall -Wextra -Wextra -std=c++23 -Iinclude
 
 TARGET = server
-OBJS = build/main.o build/TcpSocket.o build/ClientConnection.o build/HttpRequest.o build/HttpResponse.o build/FileSystemHandler.o build/StaticRouter.o build/SecurityMiddleware.o build/StaticFileMiddleware.o build/FallbackMiddleware.o build/LoggingMiddleware.o
+OBJS = build/main.o build/TcpSocket.o build/ClientConnection.o build/HttpRequest.o build/HttpResponse.o build/FileSystemHandler.o build/StaticRouter.o build/SecurityMiddleware.o build/StaticFileMiddleware.o build/FallbackMiddleware.o build/LoggingMiddleware.o build/TaskQueue.o build/ThreadPool.o build/HttpServer.o
 
 all: build_dir $(TARGET)
 
