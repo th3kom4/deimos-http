@@ -1,6 +1,7 @@
 #include "HttpServer.hpp"
 
 #include <iostream>
+#include "ServerState.hpp"
 
 HttpServer::HttpServer(uint16_t port, size_t num_threads, IMiddleware* pipeline)
 	: master_socket(port),
@@ -41,11 +42,15 @@ void HttpServer::setup_epoll() {
 
  void HttpServer::run() {
 	epoll_event events[MAX_EVENTS];
-	std::cout << "Awaiting connections...\n";
+	std::cout << "[SERVER] Running. Press Ctrl+C to shut down.\n";
 
-	while (true) {
-		int num_events = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
-
+	while (g_running.load(std::memory_order_relaxed)) {
+		int num_events = epoll_wait(epoll_fd, events, MAX_EVENTS, 100);
+		
+		if (num_events < 0) {
+			if (errno == EINTR) continue;
+			break;
+		}
 		for (int i = 0; i < num_events; ++i) {
 			if (events[i].data.ptr == nullptr) {
 				handle_new_connection();
@@ -55,6 +60,22 @@ void HttpServer::setup_epoll() {
 			}
 		}
 	}
+
+	stop();
+ }
+
+ void HttpServer::stop() {
+	std::cout << "\n[SERVER] Initiating graceful shutdown...\n";
+
+	task_queue.shutdown();
+	thread_pool.shutdown();
+
+	if (epoll_fd >= 0) {
+		close(epoll_fd);
+		epoll_fd = -1;
+	}
+
+	std::cout << "[SERVER] Thread pool joined and epoll closed. Shutdown complete.\n";
  }
 
  HttpServer::~HttpServer() {

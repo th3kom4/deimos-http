@@ -1,9 +1,11 @@
 #include <iostream>
 #include <memory>
 #include <algorithm>
+#include <csignal>
 
 #include "HttpServer.hpp"
 #include "StaticRouter.hpp"
+#include "ServerState.hpp"
 
 #include "LoggingMiddleware.hpp"
 #include "SecurityMiddleware.hpp"
@@ -12,7 +14,17 @@
 
 using namespace std;
 
+void signal_handler(int signum) {
+	if (signum == SIGINT || signum == SIGTERM) {
+		g_running.store(false, std::memory_order_relaxed);
+	}
+}
+
 int main(int argc, char *argv[]) {
+	std::signal(SIGPIPE, SIG_IGN);
+	std::signal(SIGINT, signal_handler);
+	std::signal(SIGTERM, signal_handler);
+
 	if (argc < 2 || argc > 3) {
 		std::cerr << "Usage: " << argv[0] << " <port> [worker_threads]\n";
 		return 1;
@@ -40,12 +52,16 @@ int main(int argc, char *argv[]) {
 	security_node->set_next(std::move(static_node));
 	pipeline_head->set_next(std::move(security_node));
 
-	HttpServer server(port, worker_threads, pipeline_head.get());
-	
-	std::cout << "[INIT] Hardware threads detected: " << (hw_threads > 0 ? std::to_string(hw_threads) : "Unknown") << "\n";
-	std::cout << "[INIT] Starting server on port " << port << " with " << worker_threads << " worker threads...\n";
+	try {
+		HttpServer server(port, worker_threads, pipeline_head.get());
+		
+		std::cout << "[INIT] Hardware threads detected: " << (hw_threads > 0 ? std::to_string(hw_threads) : "Unknown") << "\n";
+		std::cout << "[INIT] Starting server on port " << port << " with " << worker_threads << " worker threads...\n";
 
-	server.run();
-
+		server.run();
+	} catch (const std::exception& e) {
+		std::cerr << "[FATAL ERROR] " << e.what() << "\n";
+		return 1;
+	}
 	return 0;
 }

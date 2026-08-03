@@ -56,13 +56,25 @@ ClientConnection* TcpSocket::accept_connection() {
 
 	int new_fd = accept(sock_fd, (struct sockaddr *) &cli_addr, &cli_len);
 	if (new_fd < 0) {
+		// No clients waiting to connect 
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
+			return nullptr;
+		}
+		// Client aborted connection or OS interrupted syscall
+		if (errno == EINTR || errno == ECONNABORTED) {
+			return nullptr;
+		}
+		// Out of file descriptors
+		if (errno == EMFILE || errno == ENFILE) {
 			return nullptr;
 		}
 		throw std::runtime_error(std::string("Accept failed: ") + strerror(errno));
 	}
-
-	make_non_blocking(new_fd);
-
+	try {
+		make_non_blocking(new_fd);
+	} catch (const std::exception& e) {
+		close(new_fd);
+		return nullptr;
+	}
 	return new ClientConnection(new_fd);
 }

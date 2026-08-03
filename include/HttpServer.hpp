@@ -26,4 +26,5 @@ public:
 	HttpServer& operator=(const HttpServer&) = delete;
 
 	void run();
+	void stop();
 };
