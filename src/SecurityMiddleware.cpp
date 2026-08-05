@@ -1,9 +1,10 @@
 #include "SecurityMiddleware.hpp"
 
-#include <string>
+#include <string_view>
 
 HttpResponse SecurityMiddleware::invoke(const HttpRequest& request) {
-	std::string uri = request.get_uri();
+	std::string_view uri = request.get_uri();
+	//std::string uri = std::string(request.get_uri());
 
 	if ((uri.find("..") != std::string::npos) || 
 		(uri.find("/.") != std::string::npos)) {

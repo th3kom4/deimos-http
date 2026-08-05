@@ -1,6 +1,7 @@
 #include "StaticFileMiddleware.hpp"
 
 #include "FileSystemHandler.hpp"
+#include <string_view>
 
 StaticFileMiddleware::StaticFileMiddleware(StaticRouter* router_ptr) 
 	: router(router_ptr)
@@ -9,7 +10,7 @@ StaticFileMiddleware::StaticFileMiddleware(StaticRouter* router_ptr)
 }
 
 HttpResponse StaticFileMiddleware::invoke(const HttpRequest& request) {
-	std::string uri = request.get_uri();	
+	std::string_view uri = request.get_uri();	
 	std::string filepath = router->resolve_path(uri);
 
 	auto file_data = FileSystemHandler::read_file(filepath);

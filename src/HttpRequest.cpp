@@ -2,23 +2,7 @@
 
 #include <stdexcept>
 
-const std::string& HttpRequest::get_method() const {
-	return method;
-}
-
-const std::string& HttpRequest::get_uri() const {
-	return uri;
-}
-
-const std::string& HttpRequest::get_version() const {
-	return version;
-}
-
-const std::string& HttpRequest::get_body() const {
-	return body;
-}
-
-std::string HttpRequest::get_header(const std::string& key) const {
+std::string_view HttpRequest::get_header(const std::string_view key) const {
 	auto it = headers.find(key);
 
 	if (it != headers.end()) {
@@ -28,52 +12,61 @@ std::string HttpRequest::get_header(const std::string& key) const {
 	return "";
 }
 
-HttpRequest::HttpRequest(std::string raw_data) {
-	size_t current_pos = 0;
-	size_t space_pos = raw_data.find(" ", current_pos);
-	if (space_pos == std::string::npos) {
-		throw std::invalid_argument("Malformed request: Missing method space");
+HttpRequest::HttpRequest(std::string_view raw_data) {
+	// Parse the request line (e.g., "GET /api HTTP/1.1\r\n")
+	size_t end_of_line = raw_data.find("\r\n");
+	if (end_of_line == std::string_view::npos) {
+		throw std::invalid_argument("Malformed request: Missing request line");
 	}
-	method = raw_data.substr(current_pos, space_pos - current_pos);
-	current_pos = space_pos + 1;
-
-	space_pos = raw_data.find(" ", current_pos);
-	if (space_pos == std::string::npos) {
-		throw std::invalid_argument("Malformed request: Missing URI space");
+	
+	std::string_view request_line = raw_data.substr(0, end_of_line);
+	
+	size_t space_pos = request_line.find(' ');
+	if (space_pos == std::string_view::npos) {
+		throw std::invalid_argument("Missing method");
 	}
-	uri = raw_data.substr(current_pos, space_pos - current_pos);
-	current_pos = space_pos + 1;
+	method = request_line.substr(0, space_pos);
 
-	space_pos = raw_data.find("\r\n", current_pos);
-	if (space_pos == std::string::npos) {
-		throw std::invalid_argument("Malformed request: Missing version line break");
+	request_line.remove_prefix(space_pos + 1);
+
+	space_pos = request_line.find(' ');
+	if (space_pos == std::string_view::npos) {
+		throw std::invalid_argument("Missing URI");
 	}
-	version = raw_data.substr(current_pos, space_pos - current_pos);
-	current_pos = space_pos + 2;
+	uri = request_line.substr(0, space_pos);
+	
+	request_line.remove_prefix(space_pos + 1);
 
-	while (current_pos < raw_data.length() && raw_data.substr(current_pos, 2) != "\r\n") {
-		size_t end_of_line_pos = raw_data.find("\r\n", current_pos);
-		if (end_of_line_pos == std::string::npos) break;
+	version = request_line;
 
-		size_t colon_pos = raw_data.find(": ", current_pos);
-		if (colon_pos == std::string::npos || colon_pos > end_of_line_pos) {
-			current_pos = end_of_line_pos + 2;
-			continue;
+	raw_data.remove_prefix(end_of_line + 2);
+
+	// Parse the headers
+	while (!raw_data.empty()) {
+		end_of_line = raw_data.find("\r\n");
+		if (end_of_line == 0) {
+			raw_data.remove_prefix(2);
+			break;
 		}
 
-		std::string key = raw_data.substr(current_pos, colon_pos - current_pos);
-		std::string value = raw_data.substr(colon_pos + 2,  end_of_line_pos - (colon_pos + 2));
+		std::string_view header_line = raw_data.substr(0, end_of_line);
 
-		headers[key] = value;
+		size_t colon_pos = header_line.find(':');
+		if (colon_pos != std::string_view::npos) {
+			std::string_view key = header_line.substr(0, colon_pos);
+			header_line.remove_prefix(colon_pos + 1);
 
-		current_pos = end_of_line_pos + 2;
+			while (!header_line.empty() && header_line.front() == ' ') {
+				header_line.remove_prefix(1);
+			}
+
+			std::string_view value = header_line;
+
+			headers[key] = value;
+		}
+
+		raw_data.remove_prefix(end_of_line + 2);
 	}
-
-	current_pos += 2;
-
-	if (current_pos < raw_data.length()) {
-		body = raw_data.substr(current_pos);
-	} else {
-		body = "";
-	}
+	
+	body = raw_data;
 }

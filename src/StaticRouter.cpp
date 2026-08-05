@@ -16,29 +16,29 @@ StaticRouter::StaticRouter(const std::string document_root)
       })	
 {}
 
-bool StaticRouter::is_path_safe(const std::string& uri) const {
-	if (uri.find("..") != std::string::npos) {
+bool StaticRouter::is_path_safe(const std::string_view uri) const {
+	if (uri.find("..") != std::string_view::npos) {
 		return false;
 	}
 	
-	if (uri.find("/.") != std::string::npos) {
+	if (uri.find("/.") != std::string_view::npos) {
 		return false;
 	}
 
 	return true;
 }
 
-std::string StaticRouter::resolve_path(const std::string& uri) const {
+std::string StaticRouter::resolve_path(const std::string_view uri) const {
 	if (!is_path_safe(uri)) {
 		return "";
 	}
 
-	std::string normilized_uri = uri;
+	std::string_view normilized_uri = uri;
 	if (uri == "/") {
 		normilized_uri = "/index.html";
 	}
 
-	return base_directory + normilized_uri;
+	return base_directory + std::string(normilized_uri);
 }
 
 std::string StaticRouter::get_mime_type(const std::string& filepath) const {
