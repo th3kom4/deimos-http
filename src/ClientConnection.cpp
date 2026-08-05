@@ -4,12 +4,26 @@
 #include <stdexcept>
 
 ClientConnection::ClientConnection(int fd)
-	: client_fd(fd), state(ConnectionState::Reading) {}
+	: client_fd(fd), state(ConnectionState::Reading), keep_alive(false) {}
 
 ClientConnection::~ClientConnection() {
 	if (client_fd >= 0) {
 		close(client_fd);
 	}
+}
+
+void ClientConnection::reset() {
+	update_heartbeat();
+	read_buffer.clear();
+	write_buffer.clear();
+	state = ConnectionState::Reading;
+	keep_alive = false;
+}
+
+bool ClientConnection::is_timed_out(int timeout_seconds) const {
+	auto now = std::chrono::steady_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - last_active).count();
+	return elapsed > timeout_seconds;
 }
 
 void ClientConnection::read_request() {
@@ -19,6 +33,7 @@ void ClientConnection::read_request() {
 		ssize_t bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
 		if (bytes_read > 0) {
+			update_heartbeat();
 			read_buffer.append(buffer, bytes_read);
 		} else if (bytes_read == -1) {
 			if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -43,6 +58,7 @@ void ClientConnection::send_response() {
 		ssize_t bytes_sent = send(client_fd, write_buffer.c_str(), write_buffer.length(), 0);
 
 		if (bytes_sent >  0) {
+			update_heartbeat();
 			write_buffer.erase(0, bytes_sent);
 		} else if (bytes_sent == -1) {
 			if (errno == EAGAIN || errno == EWOULDBLOCK) {

@@ -4,8 +4,9 @@
 #include "HttpResponse.hpp"
 #include <sys/epoll.h>
 
-ThreadPool::ThreadPool(size_t num_threads, TaskQueue& q, IMiddleware* pipeline, int epoll_fd)
-	: queue(q), pipeline_head(pipeline), epoll_fd(epoll_fd) {
+ThreadPool::ThreadPool(size_t num_threads, TaskQueue& q, IMiddleware* pipeline, int epoll_fd,
+					   std::function<void(ClientConnection*)> close_cb)
+	: queue(q), pipeline_head(pipeline), epoll_fd(epoll_fd), close_connection_cb(close_cb) {
 	for (size_t i = 0; i < num_threads; ++i) {
 		workers.emplace_back([this]() {
 			this->worker_loop();
@@ -41,13 +42,20 @@ void ThreadPool::worker_loop() {
 			try {
 				HttpRequest request(client->get_read_buffer());
 				
+				bool is_keep_alive = request.get_header("Connection") != "close";
+				client->set_keep_alive(is_keep_alive);
+
 				HttpResponse response = pipeline_head->invoke(request);
-				response.add_header("Connection", "close");
+				if (!is_keep_alive) {
+					response.add_header("Connection", "close");
+				}
 
 				client->set_write_buffer(response.serialize());
 				client->clear_read_buffer();
 				client->set_state(ConnectionState::Writing);
 			} catch (const std::invalid_argument& e) {
+				client->set_keep_alive(false);
+
 				HttpResponse error_res;
 				error_res.set_status(400, "Bad Request")
 						 .add_header("Connection", "close")
@@ -57,6 +65,8 @@ void ThreadPool::worker_loop() {
 				client->clear_read_buffer();
 				client->set_state(ConnectionState::Writing);
 			} catch (const std::exception& e) {
+				client->set_keep_alive(false);
+
 				HttpResponse error_res;
 				error_res.set_status(500, "Internal Server Error")
 						 .add_header("Connection", "close")
@@ -73,7 +83,12 @@ void ThreadPool::worker_loop() {
 		}
 
 		if (client->get_state() == ConnectionState::Finished) {
-			delete client;
+			if (client->is_keep_alive()) {
+				client->reset();
+				rearm_epoll(client);
+			} else {
+				close_connection_cb(client);
+			}
 		} else {
 			rearm_epoll(client);
 		}

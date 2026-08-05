@@ -1,6 +1,8 @@
 #pragma once
 
 #include <sys/epoll.h>
+#include <unordered_set>
+#include <mutex>
 #include "TaskQueue.hpp"
 #include "ThreadPool.hpp"
 #include "TcpSocket.hpp"
@@ -14,9 +16,12 @@ private:
 
 	TaskQueue task_queue;
 	ThreadPool thread_pool;
+	std::unordered_set<ClientConnection*> active_connections;
+	std::mutex registry_mutex;
 
 	void setup_epoll();
 	void handle_new_connection();
+	void remove_connection(ClientConnection* client);
 
 public:
 	HttpServer(uint16_t port, size_t num_threads, IMiddleware* pipeline);
