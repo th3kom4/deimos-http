@@ -3,15 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>C++ HTTP Server - Multi-Asset Test</title>
-    <link rel="stylesheet" href="/style.css">
+    <title>Server Telemetry</title>
+    <style>
+        body {
+            background-color: #0f1419; /* Dark terminal background */
+            color: #39ff14; /* Hacker green */
+            font-family: 'Courier New', Courier, monospace;
+            padding: 2rem;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .dashboard {
+            border: 1px solid #39ff14;
+            padding: 2rem;
+            min-width: 300px;
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+        }
+        h1 {
+            border-bottom: 1px dashed #39ff14;
+            padding-bottom: 0.5rem;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 1rem 0;
+            font-size: 1.2rem;
+        }
+        .label { font-weight: bold; }
+        .value { color: #fdf6e3; }
+    </style>
 </head>
 <body>
-    <div class="card">
-        <h2>[MIME ROUTER ACTIVE]</h2>
-        <p>If this text is styled in dark blue/slate with a card border, your CSS file loaded correctly.</p>
-        <p>Check your browser console to verify the JavaScript payload execution.</p>
+    <div class="dashboard">
+        <h1>[ SYSTEM METRICS ]</h1>
+        <div class="metric">
+            <span class="label">STATUS:</span>
+            <span class="value" id="status">ONLINE</span>
+        </div>
+        <div class="metric">
+            <span class="label">UPTIME:</span>
+            <span class="value" id="uptime">Loading...</span>
+        </div>
+        <div class="metric">
+            <span class="label">WORKER THREADS:</span>
+            <span class="value" id="threads">Loading...</span>
+        </div>
     </div>
-    <script src="/script.js"></script>
+
+    <script>
+        async function fetchMetrics() {
+            try {
+                const response = await fetch('/api/metrics');
+                if (response.ok) {
+                    const data = await response.json();
+
+				const statusEl = document.getElementById('status');
+                if (statusEl.innerText !== 'ONLINE') {
+                    statusEl.innerText = 'ONLINE';
+                    statusEl.style.color = '#39ff14';
+                }
+
+                    document.getElementById('uptime').innerText = data.uptime_seconds + 's';
+                    document.getElementById('threads').innerText = data.worker_threads;
+                }
+            } catch (error) {
+                document.getElementById('status').innerText = 'OFFLINE';
+                document.getElementById('status').style.color = 'red';
+
+				document.getElementById('uptime').innerText = 'RECONNECTING...';
+            }
+        }
+
+        // Fetch metrics every 1 second
+        setInterval(fetchMetrics, 1000);
+        fetchMetrics();
+    </script>
 </body>
 </html>

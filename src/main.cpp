@@ -35,30 +35,30 @@ int main(int argc, char *argv[]) {
 
 	unsigned int hw_threads = std::thread::hardware_concurrency();
 	unsigned int default_threads = (hw_threads > 0) ? std::max(1u, hw_threads - 1) : 4;
-
 	unsigned int worker_threads = default_threads;
+
 	if (argc > 2) {
 		worker_threads = std::max(1, std::atoi(argv[2]));
 	}
 
+	auto start_time = std::chrono::steady_clock::now();
+
 	DynamicRouter api_router;
 
-	api_router.get("/api/search", [](const HttpRequest& req) {
-    std::string_view query = req.get_query_params("q");
+	api_router.get("/api/metrics", [start_time, worker_threads](const HttpRequest&) {
+		auto now = std::chrono::steady_clock::now();
+		auto uptime = std::chrono::duration_cast<std::chrono::seconds>(now - start_time).count();
 
-	HttpResponse res;
-	res.set_status(200, "OK")
-		.set_body("You searched for: " + std::string(query));
-	return res;
-	});
+		std::string json_payload = "{\n";
+					json_payload += " \"uptime_seconds\": " + std::to_string(uptime) + ",\n";
+					json_payload += "  \"worker_threads\": " + std::to_string(worker_threads) + "\n";
+					json_payload += "}";
 
-	api_router.post("/api/echo", [](const HttpRequest& req) {
-    std::string_view body = req.get_body();
-
-	HttpResponse res;
-	res.set_status(200, "OK")
-	.set_body("Server received POST body: " + std::string(body));
-	return res;
+		HttpResponse res;
+		res.set_status(200, "OK")
+		   .set_body(json_payload)
+		   .add_header("Content-Type", "application/json");
+		return res;
 	});
 
 	StaticRouter router("public");
