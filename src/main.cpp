@@ -13,8 +13,6 @@
 #include "StaticFileMiddleware.hpp"
 #include "FallbackMiddleware.hpp"
 
-using namespace std;
-
 void signal_handler(int signum) {
 	if (signum == SIGINT || signum == SIGTERM) {
 		g_running.store(false, std::memory_order_relaxed);
