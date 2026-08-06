@@ -9,6 +9,7 @@
 
 #include "LoggingMiddleware.hpp"
 #include "SecurityMiddleware.hpp"
+#include "RouterMiddleware.hpp"
 #include "StaticFileMiddleware.hpp"
 #include "FallbackMiddleware.hpp"
 
@@ -40,16 +41,37 @@ int main(int argc, char *argv[]) {
 		worker_threads = std::max(1, std::atoi(argv[2]));
 	}
 
+	DynamicRouter api_router;
+
+	api_router.get("/api/search", [](const HttpRequest& req) {
+    std::string_view query = req.get_query_params("q");
+
+	HttpResponse res;
+	res.set_status(200, "OK")
+		.set_body("You searched for: " + std::string(query));
+	return res;
+	});
+
+	api_router.post("/api/echo", [](const HttpRequest& req) {
+    std::string_view body = req.get_body();
+
+	HttpResponse res;
+	res.set_status(200, "OK")
+	.set_body("Server received POST body: " + std::string(body));
+	return res;
+	});
 
 	StaticRouter router("public");
 	
 	auto fallback_node = std::make_unique<FallbackMiddleware>();
 	auto static_node = std::make_unique<StaticFileMiddleware>(&router);
+	auto router_node = std::make_unique<RouterMiddleware>(&api_router);
 	auto security_node = std::make_unique<SecurityMiddleware>();
 	auto pipeline_head = std::make_unique<LoggingMiddleware>();
 
 	static_node->set_next(std::move(fallback_node));
-	security_node->set_next(std::move(static_node));
+	router_node->set_next(std::move(static_node));
+	security_node->set_next(std::move(router_node));
 	pipeline_head->set_next(std::move(security_node));
 
 	try {

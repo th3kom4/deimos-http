@@ -41,16 +41,18 @@ class HttpRequest {
 public:
 	HttpRequest(std::string_view raw_data);
 
-	const std::string_view get_method() const { return method; }
-	const std::string_view get_uri() const { return uri; }
-	const std::string_view get_version() const { return version; }
-	const std::string_view get_body() const { return body; }
+	std::string_view get_method() const { return method; }
+	std::string_view get_uri() const { return uri; }
+	std::string_view get_version() const { return version; }
+	std::string_view get_body() const { return body; }
+	std::string_view get_query_params(std::string_view key) const;
 
 	std::string_view get_header(const std::string_view key) const;
 
 private:
 	std::string_view method;
 	std::string_view uri;
+	std::unordered_map<std::string_view, std::string_view> query_params;
 	std::string_view version;
 	std::unordered_map<std::string_view,
 					   std::string_view,
