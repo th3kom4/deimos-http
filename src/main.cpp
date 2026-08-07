@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 		return res;
 	});
 
-	StaticRouter router("public");
+	StaticRouter router("../public");
 	
 	auto fallback_node = std::make_unique<FallbackMiddleware>();
 	auto static_node = std::make_unique<StaticFileMiddleware>(&router);
