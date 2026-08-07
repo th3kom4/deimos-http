@@ -1,3 +1,0 @@
-/home/koma/Code/deimos-http/build/CMakeFiles/server.dir
-/home/koma/Code/deimos-http/build/CMakeFiles/edit_cache.dir
-/home/koma/Code/deimos-http/build/CMakeFiles/rebuild_cache.dir
