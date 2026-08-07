@@ -3,15 +3,15 @@
 #include <algorithm>
 #include <csignal>
 
-#include "HttpServer.hpp"
-#include "StaticRouter.hpp"
-#include "ServerState.hpp"
+#include "deimos/core/HttpServer.hpp"
+#include "deimos/routing/StaticRouter.hpp"
+#include "deimos/core/ServerState.hpp"
 
-#include "LoggingMiddleware.hpp"
-#include "SecurityMiddleware.hpp"
-#include "RouterMiddleware.hpp"
-#include "StaticFileMiddleware.hpp"
-#include "FallbackMiddleware.hpp"
+#include "deimos/middleware/LoggingMiddleware.hpp"
+#include "deimos/middleware/SecurityMiddleware.hpp"
+#include "deimos/middleware/RouterMiddleware.hpp"
+#include "deimos/middleware/StaticFileMiddleware.hpp"
+#include "deimos/middleware/FallbackMiddleware.hpp"
 
 void signal_handler(int signum) {
 	if (signum == SIGINT || signum == SIGTERM) {

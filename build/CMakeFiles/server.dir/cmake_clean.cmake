@@ -1,0 +1,42 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/server.dir/link.d"
+  "CMakeFiles/server.dir/src/deimos/concurrency/TaskQueue.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/concurrency/TaskQueue.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/concurrency/ThreadPool.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/concurrency/ThreadPool.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/core/HttpServer.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/core/HttpServer.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/http/HttpRequest.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/http/HttpRequest.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/http/HttpResponse.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/http/HttpResponse.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/middleware/FallbackMiddleware.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/middleware/FallbackMiddleware.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/middleware/LoggingMiddleware.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/middleware/LoggingMiddleware.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/middleware/RouterMiddleware.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/middleware/RouterMiddleware.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/middleware/SecurityMiddleware.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/middleware/SecurityMiddleware.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/middleware/StaticFileMiddleware.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/middleware/StaticFileMiddleware.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/network/ClientConnection.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/network/ClientConnection.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/network/TcpSocket.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/network/TcpSocket.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/routing/DynamicRouter.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/routing/DynamicRouter.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/routing/FileSystemHandler.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/routing/FileSystemHandler.cpp.o.d"
+  "CMakeFiles/server.dir/src/deimos/routing/StaticRouter.cpp.o"
+  "CMakeFiles/server.dir/src/deimos/routing/StaticRouter.cpp.o.d"
+  "CMakeFiles/server.dir/src/main.cpp.o"
+  "CMakeFiles/server.dir/src/main.cpp.o.d"
+  "server"
+  "server.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/server.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
