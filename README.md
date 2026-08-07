@@ -13,10 +13,13 @@ It provides a lightweight backend platform designed for handling concurrent clie
 
 ## Build
 
-Requires a Linux environment with a C++23 compiler and make.
+Requires a Linux environment with a C++23 compiler and CMake.
 
 ```bash
-make
+mkdir build
+cd build
+cmake ..
+make -j$(nproc)
 ```
 
 ## Run
