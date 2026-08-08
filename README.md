@@ -11,6 +11,8 @@ It provides a lightweight backend platform designed for handling concurrent clie
 - **Thread-Safe Handoff:** Seamlessly transfers client connections from the network polling loop to available background workers.
 - **Modular Request Pipeline:** Fast, request parsing paired with clean request handling and routing.
 
+[Project Architecture](docs/ARCHITECTURE.md)
+
 ## Build
 
 Requires a Linux environment with a C++23 compiler and CMake.
@@ -37,5 +39,3 @@ make -j$(nproc)
 # Run on port 8080 with a fixed pool of 4 worker threads
 ./server 8080 4
 ```
-
-[Project Architecture](docs/ARCHITECTURE.md)
