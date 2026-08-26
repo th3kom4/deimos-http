@@ -27,15 +27,15 @@ make -j$(nproc)
 ## Run
 
 ```bash
-./server <port> [threads]
+STATIC_DIR=../public ./server <port> [threads]
 ```
 
 ### Examples
 
 ```bash
 # Run on port 8080 using the default core-scaled worker pool
-./server 8080
+STATIC_DIR=../public ./server 8080
 
 # Run on port 8080 with a fixed pool of 4 worker threads
-./server 8080 4
+STATIC_DIR=../public ./server 8080 4
 ```

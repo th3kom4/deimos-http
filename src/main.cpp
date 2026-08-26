@@ -2,6 +2,7 @@
 #include <memory>
 #include <algorithm>
 #include <csignal>
+#include <cstdlib>
 
 #include "deimos/core/HttpServer.hpp"
 #include "deimos/routing/StaticRouter.hpp"
@@ -59,7 +60,9 @@ int main(int argc, char *argv[]) {
 		return res;
 	});
 
-	StaticRouter router("../public");
+	const char* env_dir = std::getenv("STATIC_DIR");
+	std::string static_dir = env_dir ? env_dir : "./public";
+	StaticRouter router(static_dir);
 	
 	auto fallback_node = std::make_unique<FallbackMiddleware>();
 	auto static_node = std::make_unique<StaticFileMiddleware>(&router);
